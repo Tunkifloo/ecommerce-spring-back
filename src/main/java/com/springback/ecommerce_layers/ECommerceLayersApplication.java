@@ -10,6 +10,8 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.context.annotation.Bean;
 
+import java.time.LocalDateTime;
+
 @SpringBootApplication
 @RequiredArgsConstructor
 @EnableCaching
@@ -26,6 +28,8 @@ public class ECommerceLayersApplication {
     public CommandLineRunner initDatabase() {
         return args -> {
             if (userRepository.findByUsername("admin").isEmpty()) {
+                LocalDateTime now = LocalDateTime.now();
+
                 User defaultAdmin = User.builder()
                         .firstName("Admin")
                         .lastName("System")
@@ -37,6 +41,8 @@ public class ECommerceLayersApplication {
                         .active(true)
                         .enabled(true)
                         .firstLogin(false)
+                        .createdAt(now)
+                        .updatedAt(now)
                         .build();
 
                 userRepository.save(defaultAdmin);
