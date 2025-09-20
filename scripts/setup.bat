@@ -1,31 +1,28 @@
 @echo off
-echo 🚀 Configurando E-commerce Application...
+echo.
+echo ========================================
+echo   🚀 E-commerce Database Setup
+echo ========================================
+echo.
 
-REM Verificar Docker
+echo [INFO] Verificando Docker...
 docker --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Docker no está instalado. Por favor instala Docker primero.
+    echo [ERROR] Docker no encontrado. Instala Docker Desktop desde:
+    echo https://www.docker.com/products/docker-desktop
     pause
     exit /b 1
 )
+echo [SUCCESS] Docker encontrado
 
-REM Verificar Docker Compose
-docker-compose --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Docker Compose no está instalado. Por favor instala Docker Compose primero.
-    pause
-    exit /b 1
-)
-
-REM Crear directorios necesarios
+echo.
 echo [INFO] Creando directorios...
 if not exist "docker\postgres" mkdir docker\postgres
 if not exist "logs" mkdir logs
-if not exist "scripts" mkdir scripts
 
-REM Verificar archivo .env
+echo [INFO] Verificando archivo .env...
 if not exist ".env" (
-    echo [WARNING] Archivo .env no encontrado. Creando uno por defecto...
+    echo [INFO] Creando archivo .env...
     (
         echo # Database Configuration
         echo DB_NAME=ecommerce_db
@@ -33,49 +30,56 @@ if not exist ".env" (
         echo DB_PASSWORD=ecommerce_pass123
         echo DB_PORT=5432
         echo.
-        echo # Application Configuration
-        echo APP_PORT=8080
-        echo.
         echo # PgAdmin Configuration
         echo PGADMIN_EMAIL=admin@ecommerce.com
         echo PGADMIN_PASSWORD=admin123
         echo PGADMIN_PORT=8081
-        echo.
-        echo # Development Configuration
-        echo COMPOSE_PROJECT_NAME=ecommerce
     ) > .env
     echo [SUCCESS] Archivo .env creado
 )
 
-REM Parar servicios existentes
-echo [INFO] Parando servicios existentes...
-docker-compose down
-
-REM Construir y levantar servicios
-echo [INFO] Construyendo y levantando servicios...
-docker-compose up -d --build
-
 echo.
-echo 🎉 Setup completado!
+echo [INFO] Parando servicios existentes...
+docker-compose down 2>nul
+
+echo [INFO] Iniciando PostgreSQL y PgAdmin...
+docker-compose up -d
+
+echo [INFO] Esperando a que PostgreSQL esté listo...
+timeout /t 5 /nobreak >nul
+:wait_loop
+docker-compose exec -T postgres pg_isready -U ecommerce_user -d ecommerce_db >nul 2>&1
+if %errorlevel% equ 0 goto ready
+timeout /t 2 /nobreak >nul
+goto wait_loop
+
+:ready
+echo.
+echo ========================================
+echo   🎉 Base de datos lista!
+echo ========================================
 echo.
 echo 📊 Servicios disponibles:
-echo   - Aplicación: http://localhost:8080
-echo   - PgAdmin: http://localhost:8081
-echo     Email: admin@ecommerce.com
-echo     Password: admin123
+echo   - PostgreSQL: localhost:5432
+echo   - PgAdmin:    http://localhost:8081
 echo.
-echo 🗄️ Base de datos:
-echo   - Host: localhost
-echo   - Puerto: 5432
-echo   - Base de datos: ecommerce_db
-echo   - Usuario: ecommerce_user
-echo   - Password: ecommerce_pass123
+echo 🔐 Credenciales PostgreSQL:
+echo   - Base datos: ecommerce_db
+echo   - Usuario:    ecommerce_user
+echo   - Password:   ecommerce_pass123
+echo.
+echo 🔐 Credenciales PgAdmin:
+echo   - Email:      admin@ecommerce.com
+echo   - Password:   admin123
+echo.
+echo 🚀 SIGUIENTE PASO:
+echo   1. Abre tu IDE (IntelliJ IDEA)
+echo   2. Ejecuta ECommerceLayersApplication.java
+echo   3. App estará en: http://localhost:8080
 echo.
 echo 📋 Comandos útiles:
-echo   - Ver logs: docker-compose logs -f
-echo   - Parar servicios: docker-compose down
-echo   - Reiniciar: docker-compose restart
-echo   - Limpiar todo: docker-compose down -v
+echo   - Ver logs:       docker-compose logs -f
+echo   - Parar BD:       docker-compose down
+echo   - Reiniciar BD:   docker-compose restart
 echo.
-
 pause

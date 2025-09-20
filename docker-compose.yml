@@ -6,68 +6,40 @@ services:
     container_name: ecommerce-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-ecommerce_db}
+      POSTGRES_USER: ${DB_USER:-ecommerce_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ecommerce_pass123}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - ecommerce-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ecommerce_user} -d ${DB_NAME:-ecommerce_db}"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
 
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: ecommerce-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ecommerce.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "${PGADMIN_PORT}:80"
+      - "${PGADMIN_PORT:-8081}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - ecommerce-network
     depends_on:
       postgres:
         condition: service_healthy
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ecommerce-app
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "${APP_PORT}:8080"
-    networks:
-      - ecommerce-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./logs:/app/logs
 
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
     driver: local
-
-networks:
-  ecommerce-network:
-    driver: bridge
