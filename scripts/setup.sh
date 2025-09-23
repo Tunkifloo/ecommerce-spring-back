@@ -5,6 +5,8 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 clear
@@ -49,6 +51,9 @@ DB_PORT=5432
 PGADMIN_EMAIL=admin@ecommerce.com
 PGADMIN_PASSWORD=admin123
 PGADMIN_PORT=8081
+
+# Compose Project
+COMPOSE_PROJECT_NAME=ecommerce
 EOL
     echo -e "${GREEN}[SUCCESS]${NC} Archivo .env creado"
 fi
@@ -64,15 +69,15 @@ docker-compose up -d
 
 # Esperar PostgreSQL
 echo -e "${BLUE}[INFO]${NC} Esperando a que PostgreSQL esté listo..."
-sleep 5
+sleep 10
 timeout=60
 while [ $timeout -gt 0 ]; do
     if docker-compose exec -T postgres pg_isready -U ecommerce_user -d ecommerce_db &> /dev/null; then
         break
     fi
     echo -n "."
-    sleep 2
-    timeout=$((timeout-2))
+    sleep 3
+    timeout=$((timeout-3))
 done
 
 if [ $timeout -le 0 ]; then
@@ -81,32 +86,52 @@ if [ $timeout -le 0 ]; then
     exit 1
 fi
 
+echo
+echo -e "${BLUE}[INFO]${NC} Verificando datos iniciales..."
+sleep 2
+
 # Mostrar información final
 echo
 echo -e "${PURPLE}========================================${NC}"
-echo -e "${PURPLE}   🎉 Base de datos lista!${NC}"
+echo -e "${PURPLE}   🎉 E-commerce listo para usar!${NC}"
 echo -e "${PURPLE}========================================${NC}"
 echo
-echo "📊 Servicios disponibles:"
+echo -e "${CYAN}📊 Servicios disponibles:${NC}"
 echo "  - PostgreSQL: localhost:5432"
 echo "  - PgAdmin:    http://localhost:8081"
 echo
-echo "🔐 Credenciales PostgreSQL:"
+echo -e "${CYAN}🔐 Credenciales PostgreSQL:${NC}"
 echo "  - Base datos: ecommerce_db"
 echo "  - Usuario:    ecommerce_user"
 echo "  - Password:   ecommerce_pass123"
 echo
-echo "🔐 Credenciales PgAdmin:"
+echo -e "${CYAN}🔐 Credenciales PgAdmin:${NC}"
 echo "  - Email:      admin@ecommerce.com"
 echo "  - Password:   admin123"
 echo
-echo "🚀 SIGUIENTE PASO:"
+echo -e "${YELLOW}👥 USUARIOS DE PRUEBA CREADOS:${NC}"
+echo "  - Admin:      admin / admin123"
+echo "  - Customer:   ana.rodriguez@email.com / password123"
+echo "  - Seller:     carlos.seller@email.com / password123"
+echo
+echo -e "${YELLOW}🛍️ PRODUCTOS DE PRUEBA:${NC}"
+echo "  - 10 productos tecnológicos listos"
+echo "  - MacBook Pro, iPhone 15, PlayStation 5, etc."
+echo "  - Todos asignados al vendedor Carlos"
+echo
+echo -e "${GREEN}🚀 SIGUIENTE PASO:${NC}"
 echo "  1. Abre tu IDE (IntelliJ IDEA)"
 echo "  2. Ejecuta ECommerceLayersApplication.java"
 echo "  3. App estará en: http://localhost:8080"
 echo
-echo "📋 Comandos útiles:"
+echo -e "${GREEN}🧪 PRUEBA LA API:${NC}"
+echo "  1. POST /api/users/login (con cualquier usuario)"
+echo "  2. GET /api/products (ver productos disponibles)"
+echo "  3. POST /api/products (crear como seller)"
+echo
+echo -e "${CYAN}📋 Comandos útiles:${NC}"
 echo "  - Ver logs:       docker-compose logs -f"
 echo "  - Parar BD:       docker-compose down"
 echo "  - Reiniciar BD:   docker-compose restart"
+echo "  - Limpiar todo:   docker-compose down -v"
 echo

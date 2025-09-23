@@ -10,6 +10,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -55,6 +57,10 @@ public class User {
     @Column(nullable = false)
     private Boolean firstLogin = true;
 
+    @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Product> products = new ArrayList<>();
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -75,6 +81,14 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+
+    public boolean canSellProducts() {
+        return role == UserRole.SELLER || role == UserRole.ADMIN;
     }
 
     public enum UserRole {

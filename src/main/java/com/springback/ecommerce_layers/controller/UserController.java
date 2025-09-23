@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,7 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
         log.info("POST /api/users - Creating user with email: {}", request.email());
         UserResponse response = userService.createUser(request);
@@ -63,6 +65,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
@@ -72,6 +75,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         log.info("DELETE /api/users/{} - Deleting user", id);
         userService.deleteUser(id);

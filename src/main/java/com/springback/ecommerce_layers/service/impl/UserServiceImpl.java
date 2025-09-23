@@ -14,6 +14,7 @@ import com.springback.ecommerce_layers.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,16 +38,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserCreateRequest request) {
-        log.info("Creating user with email: {}", request.email());
+        log.info("Creating user with email: {} and username: {}", request.email(), request.username());
 
         // Validar que el email no exista
         if (userRepository.existsByEmail(request.email())) {
             throw new ValidationException("Ya existe un usuario con el email: " + request.email());
         }
 
-        // Validar que el username no exista (usando email como username)
-        if (userRepository.existsByUsername(request.email())) {
-            throw new ValidationException("Ya existe un usuario con el username: " + request.email());
+        // Validar que el username no exista
+        if (userRepository.existsByUsername(request.username())) {
+            throw new ValidationException("Ya existe un usuario con el username: " + request.username());
         }
 
         // Crear y guardar usuario
@@ -54,7 +55,7 @@ public class UserServiceImpl implements UserService {
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .email(request.email())
-                .username(request.email()) // Usamos email como username
+                .username(request.username()) // Usar el username proporcionado, no el email
                 .password(passwordEncoder.encode(request.password()))
                 .phone(request.phone())
                 .role(request.role())
@@ -64,10 +65,11 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        log.info("User created successfully with ID: {}", savedUser.getId());
+        log.info("User created successfully with ID: {} and username: {}", savedUser.getId(), savedUser.getUsername());
 
         return UserResponse.fromEntity(savedUser);
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -102,7 +104,7 @@ public class UserServiceImpl implements UserService {
                 throw new ValidationException("Ya existe un usuario con el email: " + request.email());
             }
             user.setEmail(request.email());
-            user.setUsername(request.email()); // Sincronizar username con email
+            // NO cambiar el username automáticamente cuando se cambia el email
         }
 
         // Actualizar campos si no son null
@@ -169,28 +171,44 @@ public class UserServiceImpl implements UserService {
     public TokenResponse login(LoginRequest request) {
         log.info("Login attempt for user: {}", request.username());
 
-        // Autenticar usuario
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password())
-        );
+        try {
+            // Verificar si el usuario existe antes de autenticar
+            User user = userRepository.findByUsername(request.username())
+                    .or(() -> userRepository.findByEmail(request.username()))
+                    .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            if (!user.getActive()) {
+                throw new BadCredentialsException("Usuario inactivo");
+            }
 
-        // Obtener usuario de la base de datos
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+            // Verificar la contraseña manualmente antes de usar AuthenticationManager
+            if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+                throw new BadCredentialsException("Credenciales inválidas");
+            }
 
-        // Generar token
-        String token = jwtService.getToken(userDetails, user);
+            // Autenticar usuario
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.username(), request.password())
+            );
 
-        log.info("Login successful for user: {}", request.username());
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        return new TokenResponse(
-                token,
-                user.getFirstLogin(),
-                user.getUsername(),
-                user.getRole().name()
-        );
+            // Generar token
+            String token = jwtService.getToken(userDetails, user);
+
+            log.info("Login successful for user: {}", request.username());
+
+            return new TokenResponse(
+                    token,
+                    user.getFirstLogin(),
+                    user.getUsername(),
+                    user.getRole().name()
+            );
+
+        } catch (Exception e) {
+            log.error("Login failed for user: {}", request.username(), e);
+            throw new BadCredentialsException("Credenciales inválidas");
+        }
     }
 
     @Override

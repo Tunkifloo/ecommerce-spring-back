@@ -5,12 +5,12 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Configuración de timezone
 SET timezone = 'America/Lima';
 
--- Crear esquemas adicionales si es necesario
--- CREATE SCHEMA IF NOT EXISTS audit;
-
--- Mensaje de confirmación
+-- Solo mensaje de confirmación
 DO $$
 BEGIN
+    RAISE NOTICE '==============================================';
     RAISE NOTICE 'Base de datos ecommerce_db inicializada correctamente';
+    RAISE NOTICE 'Spring Boot creará las tablas y datos iniciales';
+    RAISE NOTICE '==============================================';
 END
 $$;
