@@ -10,6 +10,6 @@ import com.springback.ecommerce_layers.entity.Product;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT p FROM Product p")
+    List<Product> findByName(String name);
     List<Product> findAll();
 }
