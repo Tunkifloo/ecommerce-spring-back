@@ -18,5 +18,9 @@ public record ProductUpdateRequest(
         @Max(value = 999999, message = "El stock no puede exceder 999,999")
         Integer stock,
 
-        Boolean active
+        Boolean active,
+
+        String imageData,
+
+        String imageContentType
 ) {}

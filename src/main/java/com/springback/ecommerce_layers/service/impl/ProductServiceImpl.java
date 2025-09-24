@@ -37,7 +37,7 @@ public class ProductServiceImpl implements ProductService {
         log.info("Fetching all active products");
         List<Product> products = productRepository.findByActiveTrue();
         return products.stream()
-                .map(ProductResponse::fromEntity)
+                .map(ProductResponse::fromEntityBasic) // Sin imagen para mejor performance en listados
                 .collect(Collectors.toList());
     }
 
@@ -59,6 +59,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ValidationException("Ya existe un producto activo con ese nombre para este vendedor");
         }
 
+        // Validar imagen Base64 si existe
+        if (request.imageData() != null && !request.imageData().trim().isEmpty()) {
+            validateBase64Image(request.imageData());
+        }
+
         // Crear producto
         Product product = Product.builder()
                 .name(request.name())
@@ -67,10 +72,13 @@ public class ProductServiceImpl implements ProductService {
                 .stock(request.stock())
                 .seller(seller)
                 .active(true)
+                .imageData(request.imageData())
+                .imageContentType(request.imageContentType())
                 .build();
 
         Product savedProduct = productRepository.save(product);
-        log.info("Product created successfully with ID: {}", savedProduct.getId());
+        log.info("Product created successfully with ID: {} and image: {}",
+                savedProduct.getId(), savedProduct.hasImage() ? "Yes" : "No");
 
         return ProductResponse.fromEntity(savedProduct);
     }
@@ -82,7 +90,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
-        return ProductResponse.fromEntity(product);
+        return ProductResponse.fromEntity(product); // Con imagen completa para detalle
     }
 
     @Override
@@ -93,7 +101,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
-        // Actualizar campos si no son null
+        // Actualizar campos básicos si no son null
         if (request.name() != null) {
             // Validar nombre único para el vendedor (excluyendo el producto actual)
             if (!request.name().equals(product.getName()) &&
@@ -117,6 +125,21 @@ public class ProductServiceImpl implements ProductService {
 
         if (request.active() != null) {
             product.setActive(request.active());
+        }
+
+        // Actualizar imagen si se proporciona
+        if (request.imageData() != null) {
+            if (!request.imageData().trim().isEmpty()) {
+                validateBase64Image(request.imageData());
+                product.setImageData(request.imageData());
+                product.setImageContentType(request.imageContentType());
+                log.info("Product image updated for ID: {}", id);
+            } else {
+                // Si se envía string vacío, eliminar imagen
+                product.setImageData(null);
+                product.setImageContentType(null);
+                log.info("Product image removed for ID: {}", id);
+            }
         }
 
         Product updatedProduct = productRepository.save(product);
@@ -152,7 +175,7 @@ public class ProductServiceImpl implements ProductService {
 
         List<Product> products = productRepository.findBySellerIdAndActiveTrue(sellerId);
         return products.stream()
-                .map(ProductResponse::fromEntity)
+                .map(ProductResponse::fromEntity) // Con imagen para productos específicos del vendedor
                 .collect(Collectors.toList());
     }
 
@@ -162,7 +185,7 @@ public class ProductServiceImpl implements ProductService {
         log.info("Fetching available products");
         List<Product> products = productRepository.findAvailableProducts();
         return products.stream()
-                .map(ProductResponse::fromEntity)
+                .map(ProductResponse::fromEntityBasic) // Sin imagen para listados
                 .collect(Collectors.toList());
     }
 
@@ -172,7 +195,23 @@ public class ProductServiceImpl implements ProductService {
         log.info("Searching products by name: {}", name);
         List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
         return products.stream()
-                .map(ProductResponse::fromEntity)
+                .map(ProductResponse::fromEntityBasic) // Sin imagen para búsquedas
                 .collect(Collectors.toList());
+    }
+
+    private void validateBase64Image(String base64Data) {
+        try {
+            // Verificar que sea Base64 válido
+            java.util.Base64.getDecoder().decode(base64Data);
+
+            // Verificar tamaño aproximado (Base64 aumenta ~33% el tamaño)
+            // 2MB * 1.33 = ~2.66MB en Base64
+            if (base64Data.length() > 2800000) {
+                throw new ValidationException("La imagen es demasiado grande. Máximo 2MB");
+            }
+
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Formato de imagen Base64 inválido");
+        }
     }
 }

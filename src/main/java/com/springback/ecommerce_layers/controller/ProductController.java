@@ -62,7 +62,8 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SELLER')")
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
-        log.info("POST /api/products - Creating product: {}", request.name());
+        log.info("POST /api/products - Creating product: {} with image: {}",
+                request.name(), request.imageData() != null ? "Yes" : "No");
         ProductResponse response = productService.createProduct(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -72,7 +73,8 @@ public class ProductController {
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody ProductUpdateRequest request) {
-        log.info("PUT /api/products/{} - Updating product", id);
+        log.info("PUT /api/products/{} - Updating product with image: {}",
+                id, request.imageData() != null ? "Yes" : "No");
         ProductResponse response = productService.updateProduct(id, request);
         return ResponseEntity.ok(response);
     }

@@ -23,5 +23,9 @@ public record ProductCreateRequest(
         Integer stock,
 
         @NotNull(message = "El ID del vendedor es obligatorio")
-        Long sellerId
+        Long sellerId,
+
+        String imageData,
+
+        String imageContentType
 ) {}

@@ -12,6 +12,9 @@ public record ProductResponse(
         Integer stock,
         Boolean active,
         Boolean available,
+        String imageData,
+        String imageContentType,
+        String imageDataUrl,
         SellerInfo seller,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
@@ -26,6 +29,27 @@ public record ProductResponse(
                 product.getStock(),
                 product.getActive(),
                 product.isAvailable(),
+                product.getImageData(),
+                product.getImageContentType(),
+                product.getImageDataUrl(),
+                SellerInfo.fromUser(product.getSeller()),
+                product.getCreatedAt(),
+                product.getUpdatedAt()
+        );
+    }
+
+    public static ProductResponse fromEntityBasic(Product product) {
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getStock(),
+                product.getActive(),
+                product.isAvailable(),
+                null,
+                product.getImageContentType(),
+                null,
                 SellerInfo.fromUser(product.getSeller()),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
@@ -44,5 +68,9 @@ public record ProductResponse(
                     user.getEmail()
             );
         }
+    }
+
+    public boolean hasImage() {
+        return imageData != null && !imageData.trim().isEmpty();
     }
 }

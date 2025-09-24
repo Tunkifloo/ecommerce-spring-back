@@ -40,6 +40,13 @@ public class Product {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Lob
+    @Column(name = "image_data", columnDefinition = "TEXT")
+    private String imageData;
+
+    @Column(name = "image_content_type", length = 100)
+    private String imageContentType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
@@ -85,5 +92,16 @@ public class Product {
             throw new IllegalArgumentException("La cantidad debe ser positiva");
         }
         this.stock += quantity;
+    }
+
+    public boolean hasImage() {
+        return imageData != null && !imageData.trim().isEmpty();
+    }
+
+    public String getImageDataUrl() {
+        if (!hasImage()) {
+            return null;
+        }
+        return "data:" + (imageContentType != null ? imageContentType : "image/jpeg") + ";base64," + imageData;
     }
 }
