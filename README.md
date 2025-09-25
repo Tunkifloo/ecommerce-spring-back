@@ -124,11 +124,11 @@ Al ejecutar los scripts de instalación, se crean automáticamente:
 
 ### 👥 Usuarios de Prueba
 
-| Usuario | Email | Password | Rol | Descripción |
+| Usuario | Username | Password | Rol | Descripción |
 |---------|-------|----------|-----|-------------|
 | **Admin** | admin | admin123 | ADMIN | Usuario administrador (creado por la app) |
-| **Ana Rodríguez** | ana.rodriguez@email.com | password123 | CUSTOMER | Cliente de ejemplo |
-| **Carlos Mendoza** | carlos.seller@email.com | password123 | SELLER | Vendedor con productos |
+| **Ana Rodríguez** | ana.rodriguez | password123 | CUSTOMER | Cliente de ejemplo |
+| **Carlos Mendoza** | carlos.seller | password123 | SELLER | Vendedor con productos |
 
 ### 🛍️ Productos Tecnológicos de Prueba
 
