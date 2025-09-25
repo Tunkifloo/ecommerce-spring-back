@@ -1,5 +1,6 @@
 package com.springback.ecommerce_layers.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,9 +47,10 @@ public class Product {
 
     @Column(name = "image_content_type", length = 100)
     private String imageContentType;
-
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
+    @JsonIgnoreProperties({"products", "password", "enabled", "firstLogin"})
     private User seller;
 
     @CreatedDate

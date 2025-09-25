@@ -3,6 +3,7 @@ package com.springback.ecommerce_layers.controller;
 import com.springback.ecommerce_layers.dto.request.ProductCreateRequest;
 import com.springback.ecommerce_layers.dto.request.ProductUpdateRequest;
 import com.springback.ecommerce_layers.dto.response.ProductResponse;
+import com.springback.ecommerce_layers.exception.ResourceNotFoundException;
 import com.springback.ecommerce_layers.service.ProductService;
 
 import jakarta.validation.Valid;
@@ -83,7 +84,17 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         log.info("DELETE /api/products/{} - Deleting product", id);
-        productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+
+        try {
+            productService.deleteProduct(id);
+            log.info("Product {} deleted successfully", id);
+            return ResponseEntity.noContent().build();
+        } catch (ResourceNotFoundException e) {
+            log.error("Product not found: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("Error deleting product {}: {}", id, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

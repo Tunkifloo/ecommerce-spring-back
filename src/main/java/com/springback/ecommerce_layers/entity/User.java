@@ -1,5 +1,7 @@
+// User.java - Versión optimizada para evitar consultas infinitas
 package com.springback.ecommerce_layers.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +41,7 @@ public class User {
     private String username;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(length = 15)
@@ -52,13 +55,16 @@ public class User {
     private Boolean active = true;
 
     @Column(nullable = false)
+    @JsonIgnore
     private Boolean enabled = true;
 
     @Column(nullable = false)
+    @JsonIgnore
     private Boolean firstLogin = true;
 
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnore
     private List<Product> products = new ArrayList<>();
 
     @CreatedDate
